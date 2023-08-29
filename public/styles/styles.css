@@ -1,0 +1,184 @@
+.container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+
+  font-family: sans-serif;
+
+/*  background-color: grey;*/
+}
+.gamepadHeadline {
+  height:42px;
+  font-family: monospace;
+}
+.gamepadImg {
+  width:1000px;
+  height:760px;
+  margin: 0 auto;
+}
+
+.btn {
+  position: absolute;
+/*  display: block;*/
+  display: none;
+
+  border: 10px solid pink;
+  background: white;
+}
+
+.btnCircle {
+  height: 24px;
+  width: 24px;
+
+  border-radius: 50%;
+  padding:10px;
+}
+
+#a {
+  left:875px;
+  top:420px;
+  border-color:green;
+}
+#b {
+  left:945px;
+  top:355px;
+  border-color:red;
+}
+#x {
+  left:805px;
+  top:355px;
+  border-color:blue;
+}
+#y {
+  left:875px;
+  top:285px;
+  border-color:yellow;
+}
+
+
+.bumperRect, .triggerRect {
+  border-radius:15%;
+}
+
+.bumperRect {
+  height:24px;
+  width:100px;
+}
+
+.triggerRect {
+  height: 50px;
+  width: 60px;
+}
+
+#rb, #lb { top: 225px; }
+#rb { left: 860px; }
+#rt { left: 900px; }
+#lb, #lt { left: 330px; }
+#rt, #lt { top: 150px; }
+#rb { border-bottom-right-radius: 50%; }
+#rt { border-top-right-radius: 50%; }
+#lb { border-bottom-left-radius: 50%; }
+#lt { border-top-left-radius: 50%; }
+
+.btnCenter {
+  height: 75px;
+  width: 75px;
+  border-radius: 50%;
+  
+  left: 603px;
+  top: 344px;
+
+  border: 10px green dashed;
+}
+
+.btnCenterSide {
+  height: 20px;
+  width: 40px;
+
+  top: 370px;
+  border-color: grey;
+}
+#back {
+  left: 520px;
+  border-top-left-radius: 40%;
+  border-bottom-left-radius: 40%;
+}
+#start {
+  left: 720px;
+  border-top-right-radius: 40%;
+  border-bottom-right-radius: 40%;
+}
+
+.arrow {
+  border-color: grey;
+}
+
+.arrowUD {
+  top: 470px;
+  left: 490px;
+
+  width: 20px;
+  height: 28px;
+}
+
+#up {
+  border-top-left-radius: 40%;
+  border-top-right-radius: 40%;
+}
+#down {
+  top: 565px;
+
+  border-bottom-left-radius: 40%;
+  border-bottom-right-radius: 40%;
+}
+
+.arrowLR {
+  top: 520px;
+  left: 440px;
+
+  width: 28px;
+  height: 20px;
+}
+
+#left {
+  border-top-left-radius: 40%;
+  border-bottom-left-radius: 40%;
+}
+#right {
+  left:535px;
+
+  border-top-right-radius: 40%;
+  border-bottom-right-radius: 40%;
+}
+
+.stick {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  padding: 20px;
+
+  border: 10px grey dashed;
+}
+
+#l3 { 
+  left: 350px;
+  top: 350px;
+}
+#r3 { 
+  left: 730px;
+  top: 500px;
+}
+
+
+/* Must go last for specificity reasons. */
+.btnDown {
+  display: block;
+}
+.btnHold {
+  background: rgb(255, 175, 120);
+}
