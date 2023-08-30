@@ -68,9 +68,7 @@ module.exports = function(grunt) {
   // grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-copy');
   // grunt.loadNpmTasks('grunt-contrib-cssmin');
-  // grunt.loadNpmTasks('grunt-contrib-uglify');
   // grunt.loadNpmTasks('grunt-preprocess');
-  // grunt.loadNpmTasks('grunt-riot');
 
   // Default task(s).
   grunt.registerTask('default', [
