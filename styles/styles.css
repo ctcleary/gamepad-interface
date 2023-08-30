@@ -1,31 +1,33 @@
 .contents-container {
-  position: absolute;
-  width: 100%;
-  height: 100%;
+  position: relative;
 
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  width: 1000px;
+  margin: 0 auto;
+
   text-align: center;
-
   font-family: sans-serif;
-
-/*  background-color: grey;*/
 }
+
 .gamepadHeadline {
-  height:42px;
+  height: 42px;
   font-family: monospace;
 }
-.gamepadImg {
-  width:1000px;
-  height:760px;
-  margin: 0 auto;
+
+.buttons-container {
+  position: relative;
+  top: -50px;
 }
+
+.gamepadImg {
+  position: relative;
+  top: 78px;
+  left: -5px;
+}
+
 
 .btn {
   position: absolute;
   display: block;
-/*  display: none;*/
 
   border: 10px solid pink;
   background: white;
@@ -40,23 +42,23 @@
 }
 
 #a {
-  left:875px;
-  top:420px;
+  left: 705px;
+  top: 340px;
   border-color:green;
 }
 #b {
-  left:946px;
-  top:352px;
+  left: 776px;
+  top: 272px;
   border-color:red;
 }
 #x {
-  left:806px;
-  top:352px;
+  left: 636px;
+  top: 272px;
   border-color:blue;
 }
 #y {
-  left:875px;
-  top:284px;
+  left: 705px;
+  top: 204px;
   border-color:yellow;
 }
 
@@ -66,8 +68,8 @@
 }
 
 .bumperRect {
-  height:24px;
-  width:100px;
+  height: 24px;
+  width: 100px;
 }
 
 .triggerRect {
@@ -75,41 +77,42 @@
   width: 60px;
 }
 
-#rb, #lb { top: 225px; }
-#rb { left: 860px; }
-#rt { left: 900px; }
-#lb, #lt { left: 330px; }
-#rt, #lt { top: 150px; }
+#rb, #lb { top: 145px; }
+#rb { left: 690px; }
+#rt { left: 730px; }
+#lb, #lt { left: 160px; }
+#rt, #lt { top: 70px; }
 #rb { border-bottom-right-radius: 50%; }
 #rt { border-top-right-radius: 50%; }
 #lb { border-bottom-left-radius: 50%; }
 #lt { border-top-left-radius: 50%; }
 
 .btnCenter {
-  height: 75px;
+  height: 45px;
   width: 75px;
-  border-radius: 50%;
+  padding-top:30px;
   
-  left: 603px;
-  top: 344px;
+  left: 433px;
+  top: 264px;
 
   border: 10px green dashed;
+  border-radius: 50%;
 }
 
 .btnCenterSide {
   height: 20px;
   width: 40px;
 
-  top: 370px;
+  top: 290px;
   border-color: grey;
 }
 #back {
-  left: 520px;
+  left: 350px;
   border-top-left-radius: 40%;
   border-bottom-left-radius: 40%;
 }
 #start {
-  left: 720px;
+  left: 550px;
   border-top-right-radius: 40%;
   border-bottom-right-radius: 40%;
 }
@@ -119,8 +122,8 @@
 }
 
 .arrowUD {
-  top: 470px;
-  left: 490px;
+  top: 390px;
+  left: 320px;
 
   width: 20px;
   height: 28px;
@@ -131,15 +134,15 @@
   border-top-right-radius: 40%;
 }
 #down {
-  top: 565px;
+  top: 485px;
 
   border-bottom-left-radius: 40%;
   border-bottom-right-radius: 40%;
 }
 
 .arrowLR {
-  top: 520px;
-  left: 440px;
+  top: 440px;
+  left: 270px;
 
   width: 28px;
   height: 20px;
@@ -150,7 +153,7 @@
   border-bottom-left-radius: 40%;
 }
 #right {
-  left:535px;
+  left: 365px;
 
   border-top-right-radius: 40%;
   border-bottom-right-radius: 40%;
@@ -166,12 +169,12 @@
 }
 
 #l3 { 
-  left: 350px;
-  top: 345px;
+  left: 180px;
+  top: 265px;
 }
 #r3 { 
-  left: 731px;
-  top: 497px;
+  left: 561px;
+  top: 417px;
 }
 
 
@@ -199,13 +202,13 @@
 }
 
 #lCirc {
-  top: 334px;
-  left: 338px;
+  top: 254px;
+  left: 168px;
 }
 
 #rCirc {
-  top: 486px;
-  left: 720px;
+  top: 408px;
+  left: 550px;
 }
 
 .crosshairContainer {

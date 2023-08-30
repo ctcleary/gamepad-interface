@@ -26,6 +26,7 @@ let sampleConfig = {};
   });
 
   // Sticks are always reporting position.
+  // Handlers should support receiving a Vector2.
   const stickMoveMax = 50;
   sampleConfig['lStick'] = (vec2) => {
     const ls = document.getElementById('lStick');
@@ -118,7 +119,7 @@ class GamepadInterface extends EventTarget {
   }
 
   #init() {
-    this.#buttonsArr.forEach(btnName => {
+    this.#buttonsArr.forEach((btnName) => {
       // Create all GamepadEvent event names by combining button names and event types.
       // e.g. a.Down, rb.Up, l3.Hold, start.HoldRelease etc
       const btnEventNames = Object.values(this.#btnEvts).map(evtName => {
@@ -126,7 +127,7 @@ class GamepadInterface extends EventTarget {
       });
 
       // Listen for all button events.
-      btnEventNames.forEach(name => {
+      btnEventNames.forEach((name) => {
         this.addEventListener(name, this.#handleBtnEvent);
       })
     });
@@ -135,7 +136,8 @@ class GamepadInterface extends EventTarget {
     requestAnimationFrame(this.#handleUpdate.bind(this));
   }
 
-  // For setting a new configuration, e.g. when changing between menus.
+  // For setting a new configuration.
+  // e.g. Switching from gameplay to a UI menu.
   setConfig(config) {
     this.#cfg = config;
   }
@@ -171,9 +173,9 @@ class GamepadInterface extends EventTarget {
   }
 
   #checkButtons(gp) {
-    this.#buttonsArr.forEach((btnName, i) => {
-      const isPressed = this.isPressed(gp, i);
-      const wasPressed = this.#wasPressed(i);
+    this.#buttonsArr.forEach((btnName) => {
+      const isPressed = this.isPressed(btnName, gp);
+      const wasPressed = this.#wasPressed(btnName);
       const wentDownTimeStamp = this.#timeStamps[btnName + this.#btnEvts.DOWN];
 
       let timeSinceDown = (wentDownTimeStamp) ? performance.now() - wentDownTimeStamp : null;
@@ -304,11 +306,18 @@ class GamepadInterface extends EventTarget {
     return e.type.substring(e.type.indexOf('.')); // return ex: '.Down', '.Up'', '.Hold'
   }
 
-  isPressed(gp, btnIndex) {
-    return gp.buttons[btnIndex].pressed;
+  // opt_gp : Slight optimization.
+  isPressed(btnName, opt_gp) {
+    const idx = this.#getBtnIndex(btnName);
+    const gamepad = opt_gp || this.getGamepad();
+    return gamepad.buttons[idx].pressed;
   }
-  #wasPressed(btnIndex) {
-    return this.#oldGpState.buttons[btnIndex].pressed;
+  #wasPressed(btnName) {
+    const idx = this.#getBtnIndex(btnName);
+    return this.#oldGpState.buttons[idx].pressed;
+  }
+  #getBtnIndex(btnName) {
+    return this.#buttonsArr.indexOf(btnName);
   }
 
   disconnect(e) {
