@@ -11,7 +11,7 @@ let sampleConfig = {};
   }
 
   sampleConfig.holdMs = 300;
-  sampleConfig.stickDeadzone = 0.2;
+  sampleConfig.stickDeadzone = 0.3;
 
   ['a', 'b', 'x', 'y',
     'rb', 'lb', 'rt', 'lt',
@@ -74,7 +74,7 @@ class GamepadInterface extends EventTarget {
   // How long a button must be held down for 
   // it to be considered a ".Hold" event.
   #holdMs = 300; 
-  #stickDeadzone = 0.15;
+  #stickDeadzone = 0.3;
 
   // Due to how the Gamepad object works,
   // index order of this array is important.

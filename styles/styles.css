@@ -38,7 +38,7 @@
   width: 24px;
 
   border-radius: 50%;
-  padding:10px;
+  padding: 14px 10px 6px 10px;
 }
 
 #a {
@@ -65,23 +65,27 @@
 
 .bumperRect, .triggerRect {
   border-radius:15%;
+  border-color: orange;
 }
 
 .bumperRect {
   height: 24px;
   width: 100px;
+
+  padding-top: 6px;
 }
 
 .triggerRect {
-  height: 50px;
-  width: 60px;
+  height: 40px;
+  width: 45px;
+  padding-top: 20px;
 }
 
-#rb, #lb { top: 145px; }
+#rb, #lb { top: 135px; }
 #rb { left: 690px; }
-#rt { left: 730px; }
+#rt { left: 745px; }
 #lb, #lt { left: 160px; }
-#rt, #lt { top: 70px; }
+#rt, #lt { top: 50px; }
 #rb { border-bottom-right-radius: 50%; }
 #rt { border-top-right-radius: 50%; }
 #lb { border-bottom-left-radius: 50%; }
@@ -90,7 +94,7 @@
 .btnCenter {
   height: 45px;
   width: 75px;
-  padding-top:30px;
+  padding-top: 28px;
   
   left: 433px;
   top: 264px;
@@ -100,8 +104,9 @@
 }
 
 .btnCenterSide {
-  height: 20px;
+  height: 18px;
   width: 40px;
+  padding-top:2px;
 
   top: 290px;
   border-color: grey;
@@ -136,6 +141,9 @@
 #down {
   top: 485px;
 
+  height: 22px;
+  padding-top: 6px;
+
   border-bottom-left-radius: 40%;
   border-bottom-right-radius: 40%;
 }
@@ -169,7 +177,7 @@
 }
 
 #l3 { 
-  left: 180px;
+  left: 179px;
   top: 265px;
 }
 #r3 { 
