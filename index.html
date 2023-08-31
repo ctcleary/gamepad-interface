@@ -4,7 +4,6 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>GamepadInterface</title>
-
   <script type="text/javascript" src="src/gamepadInterface.js"></script>
 
   <link rel="stylesheet" type="text/css" href="styles/normalize.css" />
@@ -56,47 +55,47 @@
   </div>
 
   <script type="text/javascript">
+    if (GamepadInterface !== undefined) {
+      console.log('gamepadInterface.js loaded');
+    }
+
     let gamepadInterface;
     let sampleConfig = {};
 
-    (function() {
-      if (isLocaldev) {
-        sampleConfig.doDebug = true;
-      }
+    sampleConfig.doDebug = true;
+    
+    sampleConfig.holdMs = 300;
+    sampleConfig.stickDeadzone = 0.3;
 
-      sampleConfig.holdMs = 300;
-      sampleConfig.stickDeadzone = 0.3;
+    ['a', 'b', 'x', 'y',
+      'rb', 'lb', 'rt', 'lt',
+      'back', 'start',
+      'up', 'down', 'left', 'right',
+      'r3', 'l3',
+      'center'].forEach((btn, i) => {
+        sampleConfig[btn+'.Down'] =        () => document.getElementById(btn).classList.add('btnDown');
+        sampleConfig[btn+'.Up'] =          () => document.getElementById(btn).classList.remove('btnDown');
+        sampleConfig[btn+'.Hold'] =        () => document.getElementById(btn).classList.add('btnHold');
+        
+        sampleConfig[btn+'.HoldRelease'] = (timeHeld) => {
+          document.getElementById(btn).classList.remove('btnHold');
+          console.log('HoldRelease handler :: timeHeld', timeHeld)
+        }
+    });
 
-      ['a', 'b', 'x', 'y',
-        'rb', 'lb', 'rt', 'lt',
-        'back', 'start',
-        'up', 'down', 'left', 'right',
-        'r3', 'l3',
-        'center'].forEach((btn, i) => {
-          sampleConfig[btn+'.Down'] =        () => document.getElementById(btn).classList.add('btnDown');
-          sampleConfig[btn+'.Up'] =          () => document.getElementById(btn).classList.remove('btnDown');
-          sampleConfig[btn+'.Hold'] =        () => document.getElementById(btn).classList.add('btnHold');
-          
-          sampleConfig[btn+'.HoldRelease'] = (timeHeld) => {
-            document.getElementById(btn).classList.remove('btnHold');
-            console.log('HoldRelease handler :: timeHeld', timeHeld)
-          }
-      });
-
-      // Sticks are always reporting position.
-      // Handlers should support receiving a Vector2.
-      const stickMoveMax = 50;
-      sampleConfig['lStick'] = (vec2) => {
-        const ls = document.getElementById('lStick');
-        ls.style.left = (stickMoveMax * vec2[0]) +'px';
-        ls.style.top  = (stickMoveMax * vec2[1]) +'px';
-      }
-      sampleConfig['rStick'] = (vec2) => {
-        const rs = document.getElementById('rStick');
-        rs.style.left = (stickMoveMax * vec2[0]) +'px';
-        rs.style.top  = (stickMoveMax * vec2[1]) +'px';
-      }
-    })();
+    // Sticks are always reporting position.
+    // Handlers should support receiving a Vector2.
+    const stickMoveMax = 50;
+    sampleConfig['lStick'] = (vec2) => {
+      const ls = document.getElementById('lStick');
+      ls.style.left = (stickMoveMax * vec2[0]) + 'px';
+      ls.style.top  = (stickMoveMax * vec2[1]) + 'px';
+    }
+    sampleConfig['rStick'] = (vec2) => {
+      const rs = document.getElementById('rStick');
+      rs.style.left = (stickMoveMax * vec2[0]) + 'px';
+      rs.style.top  = (stickMoveMax * vec2[1]) + 'px';
+    }
 
     gamepadInterface = new GamepadInterface(sampleConfig);
   </script>

@@ -1,6 +1,3 @@
-const isLocaldev = window.location.href.indexOf('localhost') !== -1;
-if (isLocaldev) console.log("gamepadInterface.js loaded");
-
 class GamepadInterface extends EventTarget {
   #doDebug = false;
   #stop = false;
@@ -12,7 +9,10 @@ class GamepadInterface extends EventTarget {
 
   // How long a button must be held down for 
   // it to be considered a ".Hold" event.
-  #holdMs = 300; 
+  #holdMs = 300;
+
+  // Reset stick to 0,0 if controller is reporting
+  // less than #stickDeadzone position (quirk of gamepads)
   #stickDeadzone = 0.3;
 
   // Due to how the Gamepad object works,
@@ -107,19 +107,23 @@ class GamepadInterface extends EventTarget {
   #boundOnGamepadDisconnectedHandler = this.#onGamepadDisconnected.bind(this);
 
   #listenForConnected() {
-    window.addEventListener("gamepadconnected", this.#boundOnGamepadConnectedHandler);
+    window.addEventListener('gamepadconnected', this.#boundOnGamepadConnectedHandler);
   }
 
   #onGamepadConnected(e) {
     const gamepad = navigator.getGamepads()[e.gamepad.index];
     if (gamepad) {
+      if (this.#doDebug) console.log('gamepad connected');
       this.#setOldGamepadState(gamepad);
       this.#setGamepadIndex(e.gamepad.index);
+
+      this.#stop = false;
+      // Restart the loop.
       this.#monitoringLoop();
     }
 
-    window.removeEventListener("gamepadconnected", this.#boundOnGamepadConnectedHandler);
-    window.addEventListener("gamepaddisconnected", this.#boundOnGamepadDisconnectedHandler);
+    window.removeEventListener('gamepadconnected', this.#boundOnGamepadConnectedHandler);
+    window.addEventListener('gamepaddisconnected', this.#boundOnGamepadDisconnectedHandler);
   }
 
   #onGamepadDisconnected(e) {
@@ -391,9 +395,10 @@ class GamepadInterface extends EventTarget {
   disconnect(e) {
     // TODO There's probably more teardown work to do here.
     this.#stop = true;
-    window.removeEventListener("gamepadconnected", this.#boundOnGamepadConnectedHandler);
-    window.removeEventListener("gamepaddisconnected", this.#boundOnGamepadDisconnectedHandler);
-    if (this.#doDebug) console.log("gamepad disconnected");
+    window.removeEventListener('gamepadconnected', this.#boundOnGamepadConnectedHandler);
+    window.removeEventListener('gamepaddisconnected', this.#boundOnGamepadDisconnectedHandler);
+
+    if (this.#doDebug) console.log('gamepad disconnected');
   }
 }
 
