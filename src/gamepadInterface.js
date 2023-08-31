@@ -1,75 +1,14 @@
-
 const isLocaldev = window.location.href.indexOf('localhost') !== -1;
 if (isLocaldev) console.log("gamepadInterface.js loaded");
-
-let gamepadInterface;
-let sampleConfig = {};
-
-(function() {
-  if (isLocaldev) {
-    sampleConfig.doDebug = true;
-  }
-
-  sampleConfig.holdMs = 300;
-  sampleConfig.stickDeadzone = 0.3;
-
-  ['a', 'b', 'x', 'y',
-    'rb', 'lb', 'rt', 'lt',
-    'back', 'start',
-    'up', 'down', 'left', 'right',
-    'r3', 'l3',
-    'center'].forEach((btn, i) => {
-      sampleConfig[btn+'.Down'] =        () => document.getElementById(btn).classList.add('btnDown');
-      sampleConfig[btn+'.Up'] =          () => document.getElementById(btn).classList.remove('btnDown');
-      sampleConfig[btn+'.Hold'] =        () => document.getElementById(btn).classList.add('btnHold');
-      sampleConfig[btn+'.HoldRelease'] = () => document.getElementById(btn).classList.remove('btnHold');
-  });
-
-  // Sticks are always reporting position.
-  // Handlers should support receiving a Vector2.
-  const stickMoveMax = 50;
-  sampleConfig['lStick'] = (vec2) => {
-    const ls = document.getElementById('lStick');
-    ls.style.left = (stickMoveMax * vec2[0]) +'px';
-    ls.style.top  = (stickMoveMax * vec2[1]) +'px';
-  }
-  sampleConfig['rStick'] = (vec2) => {
-    const rs = document.getElementById('rStick');
-    rs.style.left = (stickMoveMax * vec2[0]) +'px';
-    rs.style.top  = (stickMoveMax * vec2[1]) +'px';
-  }
-})();
-
-(function() {
-  function onGamepadConnected(e) {
-    const gamepad = navigator.getGamepads()[e.gamepad.index];
-
-    // Start up new GamepadInterface instance.
-    gamepadInterface = new GamepadInterface(gamepad, sampleConfig);
-
-    window.removeEventListener("gamepadconnected", onGamepadConnected);
-    window.addEventListener("gamepaddisconnected", onGamepadDisconnected);
-  }
-
-  function onGamepadDisconnected (e) {
-    // Tear down existing GamepadInterface instance.
-    gamepadInterface.disconnect(e);
-
-    window.removeEventListener("gamepaddisconnected", onGamepadDisconnected);
-    window.addEventListener("gamepadconnected", onGamepadConnected);
-  }
-
-  window.addEventListener("gamepadconnected", onGamepadConnected);
-})();
-
 
 class GamepadInterface extends EventTarget {
   #doDebug = false;
   #stop = false;
+  #cfg = {};
+  #autoReconnect = true;
 
   #oldGpState;
   #gpIndex;
-  #cfg;
 
   // How long a button must be held down for 
   // it to be considered a ".Hold" event.
@@ -96,26 +35,45 @@ class GamepadInterface extends EventTarget {
   #btnEvts = {
     DOWN: '.Down',
     UP: '.Up',
-    PRESSED: '.Pressed',
+    PRESS: '.Press',
     HOLD: '.Hold',
     HOLD_RELEASE: '.HoldRelease'
   };
 
-  // TODO, consider not requiring a gamepad on instance creation,
-  // instead, the GamepadInterface might set up its 
-  // 'ongamepadconnected' listeners/handlers on its own?
 
-  constructor(gamepad, config) {
+  constructor(config, opt_gamepad) {
     super();
-    this.#oldGpState = gamepad;
-    this.#gpIndex = gamepad.index;
-    this.#cfg = config || {};
+    this.setConfig(config);
+    
+    if (this.#cfg.doDebug !== undefined)       this.#doDebug = this.#cfg.doDebug;
+    if (this.#cfg.holdMs !== undefined)        this.#holdMs = this.#cfg.holdMs;
+    if (this.#cfg.stickDeadzone !== undefined) this.#stickDeadzone = this.#cfg.stickDeadzone;
 
-    if (this.#cfg.holdMs) this.#holdMs = this.#cfg.holdMs;
-    if (this.#cfg.stickDeadzone) this.#stickDeadzone = this.#cfg.stickDeadzone;
-    if (this.#cfg.doDebug !== undefined) this.#doDebug = this.#cfg.doDebug;
+    if (opt_gamepad) {
+      // If we already have a gamepad, use it...
+      this.#setupGamepad(opt_gamepad);
+    } else {
+      // ... Otherwise, set up listeners for 'gamepadconnected'
+      this.#listenForConnected();
+    }
+
 
     this.#init();
+  }
+
+  // For setting a new configuration.
+  // e.g. Switching from gameplay to a UI menu.
+  setConfig(config) {
+    if (config.doDebug) console.log('config ::', config);
+    this.#cfg = config;
+  }
+
+  // Gets a fresh state from the current gamepad.
+  getGamepad() {
+    const currGamepad = navigator.getGamepads ? navigator.getGamepads()[this.#gpIndex] : 
+        (navigator.webkitGetGamepads ? navigator.webkitGetGamepads()[[this.#gpIndex]] : []);
+
+    return currGamepad;
   }
 
   #init() {
@@ -132,28 +90,76 @@ class GamepadInterface extends EventTarget {
       })
     });
 
-    // Start the monitoring loop
-    requestAnimationFrame(this.#handleUpdate.bind(this));
+    if (this.getGamepad() !== undefined) {
+      // Start the monitoring loop
+      this.#monitoringLoop();
+    }
   }
 
-  // For setting a new configuration.
-  // e.g. Switching from gameplay to a UI menu.
-  setConfig(config) {
-    this.#cfg = config;
+
+
+  /* ---
+
+    Handle gamepad connected and disconnected events.
+
+  --- */
+  #boundOnGamepadConnectedHandler = this.#onGamepadConnected.bind(this);
+  #boundOnGamepadDisconnectedHandler = this.#onGamepadDisconnected.bind(this);
+
+  #listenForConnected() {
+    window.addEventListener("gamepadconnected", this.#boundOnGamepadConnectedHandler);
+  }
+
+  #onGamepadConnected(e) {
+    const gamepad = navigator.getGamepads()[e.gamepad.index];
+    if (gamepad) {
+      this.#setOldGamepadState(gamepad);
+      this.#setGamepadIndex(e.gamepad.index);
+      this.#monitoringLoop();
+    }
+
+    window.removeEventListener("gamepadconnected", this.#boundOnGamepadConnectedHandler);
+    window.addEventListener("gamepaddisconnected", this.#boundOnGamepadDisconnectedHandler);
+  }
+
+  #onGamepadDisconnected(e) {
+    // Tear down existing GamepadInterface instance.
+    this.disconnect(e);
+
+    if (this.#autoReconnect) {
+      this.#listenForConnected();
+    }
+  }
+
+
+
+  /* ---
+
+    Handle gamepad states
+
+  --- */
+  #setupGamepad(gp) {
+    this.#setOldGamepadState(gp);
+    this.#setGamepadIndex(gp.index);
+  }
+
+  #setGamepadIndex(idx) {
+    this.#gpIndex = idx;
   }
 
   #setOldGamepadState(gp) {
     this.#oldGpState = gp;
   }
 
-  // Gets a fresh state from the current gamepad.
-  getGamepad() {
-    const currGamepad = navigator.getGamepads ? navigator.getGamepads()[this.#gpIndex] : 
-      (navigator.webkitGetGamepads ? navigator.webkitGetGamepads()[[this.#gpIndex]] : []);
-    
-    if (!currGamepad) throw new Error("No gamepad!");
 
-    return currGamepad;
+
+  /* ---
+
+    Handle monitoring loop
+
+  --- */
+  #monitoringLoop() {
+    requestAnimationFrame(this.#handleUpdate.bind(this));
   }
 
   #handleUpdate(timestamp) {
@@ -169,16 +175,26 @@ class GamepadInterface extends EventTarget {
     this.#setOldGamepadState(gp);
 
     // Continue the loop
-    requestAnimationFrame(this.#handleUpdate.bind(this))
+    this.#monitoringLoop();
   }
 
+
+
+  /* ---
+
+    Handle buttons
+
+  --- */
   #checkButtons(gp) {
     this.#buttonsArr.forEach((btnName) => {
       const isPressed = this.isPressed(btnName, gp);
       const wasPressed = this.#wasPressed(btnName);
+      
+      // For "Hold" event triggering
       const wentDownTimeStamp = this.#timeStamps[btnName + this.#btnEvts.DOWN];
+      const holdTimeStamp = this.#timeStamps[btnName + this.#btnEvts.HOLD]
 
-      let timeSinceDown = (wentDownTimeStamp) ? performance.now() - wentDownTimeStamp : null;
+      let timeSinceDown;
       
       if (isPressed && !wasPressed) {
         // Button just went Down
@@ -190,7 +206,7 @@ class GamepadInterface extends EventTarget {
 
         // Check if this is a quick "Pressed" event
         if (timeSinceDown && timeSinceDown < this.#holdMs) {
-          this.dispatchEvent(new GamepadEvent(btnName + this.#btnEvts.PRESSED));
+          this.dispatchEvent(new GamepadEvent(btnName + this.#btnEvts.PRESS));
         }
 
         // Button also just went Up from Hold
@@ -198,7 +214,10 @@ class GamepadInterface extends EventTarget {
           this.dispatchEvent(new GamepadEvent(btnName + this.#btnEvts.HOLD_RELEASE));
         }
 
-      } else if (isPressed && wasPressed) {        
+      } else if (isPressed && wasPressed && !holdTimeStamp) {        
+        // Button is in Hold State, but we check #timeStamps to make sure we only trigger the "Hold" event once.
+        timeSinceDown = (wentDownTimeStamp) ? performance.now() - wentDownTimeStamp : null;
+
         // Test timeSinceDown to determine if a button is in 'Hold' state
         if (timeSinceDown && timeSinceDown > this.#holdMs) {
           this.dispatchEvent(new GamepadEvent(btnName + this.#btnEvts.HOLD));
@@ -209,32 +228,66 @@ class GamepadInterface extends EventTarget {
 
   // Example events: 'a.Down', 'lt.Up', 'rt.Hold' etc
   #handleBtnEvent(e) {
-    // #timeStamps keys are full event names, e.g. 'a.Down', 'y.Hold', 'x.Up'
-    const now = e.timeStamp;
+    if (this.#doDebug) console.log('handleBtnEvent ::', e.type, e.timeStamp);
 
+    // If config passed a handler function for this ButtonEvent, call it.
+    const handlerFunc = this.#getBtnHandlerFromConfig(e);
+    let handlerArguments = this.#getHandlerArguments(e);
+    if (handlerFunc) handlerFunc.apply(null, handlerArguments);
+
+    this.#updateTimeStamps(e);
+  }
+
+  #getHandlerArguments(e) {
     const btnName = this.#getBtnNameFromBtnEvent(e);
-    const eventType = this.#getEvtTypeFromBtnEvent(e);
+    const btnEventType = this.#getBtnEvtTypeFromBtnEvent(e);
 
     // Temp shortcut for enum values
     const be = this.#btnEvts;
 
+    let handlerArguments = [];
 
-    if (this.#doDebug && eventType !== be.HOLD) 
-      console.log('handleBtnEvent ::', e.type, e.timeStamp);
+    switch (btnEventType) {
+      case be.DOWN :
+      case be.PRESS :
+      case be.HOLD :
+      case be.UP :
+        return handlerArguments;
 
-    // If config passed a handler function for this ButtonEvent, call it.
-    const handlerFunc = this.#getHandlerFromConfig(e.type);
-    if (handlerFunc) handlerFunc(); 
+      case be.HOLD_RELEASE :
+        const timeHeld = performance.now() - this.#timeStamps[btnName + be.HOLD];
+        handlerArguments.push(timeHeld);
+
+        return handlerArguments;
+
+      default:
+        return handlerArguments;
+    }
+  }
+
+  #getBtnHandlerFromConfig(e) {
+    return this.#cfg[e.type];
+  }
+
+  // #timeStamps keys are full event names, e.g. 'a.Down', 'y.Hold', 'x.Up'
+  #updateTimeStamps(e) {
+    const now = performance.now();
+
+    const btnName = this.#getBtnNameFromBtnEvent(e);
+    const btnEventType = this.#getBtnEvtTypeFromBtnEvent(e);
+
+    // Temp shortcut for enum values
+    const be = this.#btnEvts;
 
     // Internal tracking.
-    switch (eventType) {
+    switch (btnEventType) {
       case be.DOWN :
         this.#timeStamps[btnName + be.DOWN] = now;
         // Clear out the btnName+".Up" value for the given button.
         this.#timeStamps[btnName + be.UP] = null;
         return;
 
-      case be.PRESSED :
+      case be.PRESS :
         // "Pressed" state is over, clear out related timestamps.
         this.#timeStamps[btnName + be.DOWN] = null;
         this.#timeStamps[btnName + be.UP] = null;
@@ -243,7 +296,6 @@ class GamepadInterface extends EventTarget {
       case be.HOLD :
         // Do once on initial Hold event.
         if (this.#timeStamps[btnName + be.HOLD] != this.#timeStamps[btnName + be.DOWN]) {
-          if (this.#doDebug) console.log('handleBtnEvent ::', e.type, e.timeStamp);
           this.#timeStamps[btnName + be.HOLD] = this.#timeStamps[btnName + be.DOWN];
         }
         return;
@@ -254,15 +306,22 @@ class GamepadInterface extends EventTarget {
 
       case be.HOLD_RELEASE :
         this.#timeStamps[btnName + be.HOLD_RELEASE] = now;
-        // TODO Call a HoldRelease handler function with a timeHeld argument?
         this.#timeStamps[btnName + be.HOLD] = null;
         return;
 
       default:
         return;
-      }
+    }
   }
 
+
+
+
+  /* ---
+
+    Handle joysticks
+
+  --- */
   #checkSticks(gp) {
     // Sticks are assumed to always be reporting position.
     this.#checkStick(gp, true);
@@ -276,8 +335,9 @@ class GamepadInterface extends EventTarget {
     const handlerName = (isLeft) ? 'lStick' : 'rStick';
 
     const vec2 = this.#checkDeadzone([gp.axes[axis1], gp.axes[axis2]]);
-    const handler = this.#getHandlerFromConfig(handlerName);
-    if (handler) handler(vec2);
+    const stickHandler = this.#getStickHandlerFromConfig(handlerName);
+    
+    if (stickHandler) stickHandler(vec2);
   }
   
   #checkDeadzone(vec2) {
@@ -295,14 +355,22 @@ class GamepadInterface extends EventTarget {
     return [nx, ny];
   }
 
-  #getHandlerFromConfig(eventName) {
-    return this.#cfg[eventName];
+
+  #getStickHandlerFromConfig(handlerName) {
+    return this.#cfg[handlerName];
   }
 
+
+
+  /* ---
+
+    Event utilities
+
+  --- */
   #getBtnNameFromBtnEvent(e) {
     return e.type.substring(0, e.type.indexOf('.')); // return ex: 'a', 'lt', 'r3'
   }
-  #getEvtTypeFromBtnEvent(e) {
+  #getBtnEvtTypeFromBtnEvent(e) {
     return e.type.substring(e.type.indexOf('.')); // return ex: '.Down', '.Up'', '.Hold'
   }
 
@@ -323,6 +391,8 @@ class GamepadInterface extends EventTarget {
   disconnect(e) {
     // TODO There's probably more teardown work to do here.
     this.#stop = true;
+    window.removeEventListener("gamepadconnected", this.#boundOnGamepadConnectedHandler);
+    window.removeEventListener("gamepaddisconnected", this.#boundOnGamepadDisconnectedHandler);
     if (this.#doDebug) console.log("gamepad disconnected");
   }
 }
